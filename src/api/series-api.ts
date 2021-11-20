@@ -10,6 +10,7 @@ import { PriceLineOptions } from '../model/price-line-options';
 import { RangeImpl } from '../model/range-impl';
 import { Series, SeriesPartialOptionsInternal } from '../model/series';
 import { SeriesMarker } from '../model/series-markers';
+import { SeriesTPO } from '../model/series-tpos';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -143,6 +144,16 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 			time: convertTime(marker.time),
 		}));
 		this._series.setMarkers(convertedMarkers);
+	}
+
+	public setTPOs(data: SeriesTPO<Time>[]): void {
+		checkItemsAreOrdered(data, true);
+
+		const convertedTPOs = data.map<SeriesTPO<TimePoint>>((tpo: SeriesTPO<Time>) => ({
+			...tpo,
+			time: convertTime(tpo.time),
+		}));
+		this._series.setTPOs(convertedTPOs);
 	}
 
 	public applyOptions(options: SeriesPartialOptionsMap[TSeriesType]): void {

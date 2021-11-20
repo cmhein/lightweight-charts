@@ -19,6 +19,7 @@ import { PanePriceAxisView } from '../views/pane/pane-price-axis-view';
 import { SeriesHorizontalBaseLinePaneView } from '../views/pane/series-horizontal-base-line-pane-view';
 import { SeriesLastPriceAnimationPaneView } from '../views/pane/series-last-price-animation-pane-view';
 import { SeriesMarkersPaneView } from '../views/pane/series-markers-pane-view';
+import { SeriesTPOsPaneView } from '../views/pane/series-tpos-pane-view';
 import { SeriesPriceLinePaneView } from '../views/pane/series-price-line-pane-view';
 import { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { SeriesPriceAxisView } from '../views/price-axis/series-price-axis-view';
@@ -40,6 +41,7 @@ import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { createSeriesPlotList, SeriesPlotList, SeriesPlotRow } from './series-data';
 import { InternalSeriesMarker, SeriesMarker } from './series-markers';
+import { InternalSeriesTPO, SeriesTPO } from './series-tpos';
 import {
 	AreaStyleOptions,
 	BaselineStyleOptions,
@@ -113,6 +115,9 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private _markers: SeriesMarker<TimePoint>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
 	private _markersPaneView!: SeriesMarkersPaneView;
+	private _TPOs: SeriesTPO<TimePoint>[] = [];
+	private _indexedTPOs: InternalSeriesTPO<TimePointIndex>[] = [];
+	private _TPOsPaneView!: SeriesTPOsPaneView;
 	private _animationTimeoutId: TimerId | null = null;
 
 	public constructor(model: ChartModel, options: SeriesOptionsInternal<T>, seriesType: T) {
@@ -247,9 +252,11 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this._data.setData(data);
 
 		this._recalculateMarkers();
+		this._recalculateTPOs();
 
 		this._paneView.update('data');
 		this._markersPaneView.update('data');
+		this._TPOsPaneView.update('data');
 
 		if (this._lastPriceAnimationPaneView !== null) {
 			if (updateInfo && updateInfo.lastBarUpdatedOrNewBarsAddedToTheRight) {
@@ -277,8 +284,23 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this.model().lightUpdate();
 	}
 
+	public setTPOs(data: SeriesTPO<TimePoint>[]): void {
+		this._TPOs = data.map<SeriesTPO<TimePoint>>((item: SeriesTPO<TimePoint>) => ({ ...item }));
+		this._recalculateTPOs();
+		const sourcePane = this.model().paneForSource(this);
+		this._TPOsPaneView.update('data');
+		this.model().recalculatePane(sourcePane);
+		this.model().updateSource(this);
+		this.model().updateCrosshair();
+		this.model().lightUpdate();
+	}
+
 	public indexedMarkers(): InternalSeriesMarker<TimePointIndex>[] {
 		return this._indexedMarkers;
+	}
+
+	public indexedTPOs(): InternalSeriesTPO<TimePointIndex>[] {
+		return this._indexedTPOs;
 	}
 
 	public createPriceLine(options: PriceLineOptions): CustomPriceLine {
@@ -378,7 +400,8 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			this._paneView,
 			this._priceLineView,
 			this._panePriceAxisView,
-			this._markersPaneView
+			this._markersPaneView,
+			this._TPOsPaneView
 		);
 
 		return res;
@@ -418,6 +441,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	public updateAllViews(): void {
 		this._paneView.update();
 		this._markersPaneView.update();
+		this._TPOsPaneView.update();
 
 		for (const priceAxisView of this._priceAxisViews) {
 			priceAxisView.update();
@@ -589,8 +613,36 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		});
 	}
 
+	private _recalculateTPOs(): void {
+		const timeScale = this.model().timeScale();
+		if (timeScale.isEmpty() || this._data.size() === 0) {
+			this._indexedTPOs = [];
+			return;
+		}
+
+		const firstDataIndex = ensureNotNull(this._data.firstIndex());
+
+		this._indexedTPOs = this._TPOs.map<InternalSeriesTPO<TimePointIndex>>((tpo: SeriesTPO<TimePoint>, index: number) => {
+			// the first find index on the time scale (across all series)
+			const timePointIndex = ensureNotNull(timeScale.timeToIndex(tpo.time, true));
+
+			// and then search that index inside the series data
+			const searchMode = timePointIndex < firstDataIndex ? PlotRowSearchMode.NearestRight : PlotRowSearchMode.NearestLeft;
+			const seriesDataIndex = ensureNotNull(this._data.search(timePointIndex, searchMode)).index;
+			return {
+				time: seriesDataIndex,
+				position: tpo.position,
+				id: tpo.id,
+				internalId: index,
+				text: tpo.text,
+				size: tpo.size,
+			};
+		});
+	}
+
 	private _recreatePaneViews(): void {
 		this._markersPaneView = new SeriesMarkersPaneView(this, this.model());
+		this._TPOsPaneView = new SeriesTPOsPaneView(this, this.model());
 
 		switch (this._seriesType) {
 			case 'Bar': {
