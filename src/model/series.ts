@@ -634,8 +634,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 				position: tpo.position,
 				id: tpo.id,
 				internalId: index,
-				text: tpo.text,
-				size: tpo.size,
+				text: tpo.text
 			};
 		});
 	}

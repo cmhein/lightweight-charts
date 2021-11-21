@@ -23,10 +23,6 @@ export interface SeriesTPO<TimeType> {
 	 * The optional text of the TPO.
 	 */
 	text?: string;
-	/**
-	 * The optional size of the TPO.
-	 */
-	size?: number;
 }
 
 export interface InternalSeriesTPO<TimeType> extends SeriesTPO<TimeType> {

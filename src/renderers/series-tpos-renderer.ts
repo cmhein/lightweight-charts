@@ -17,7 +17,6 @@ export interface SeriesTPOText {
 
 export interface SeriesTPORendererDataItem extends TimedValue {
 	y: Coordinate;
-	size: number;
 	internalId: number;
 	externalId?: string;
 	text?: SeriesTPOText;

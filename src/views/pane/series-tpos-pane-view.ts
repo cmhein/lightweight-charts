@@ -47,10 +47,9 @@ function fillSizeAndY(
 	const inBarPrice = isNumber(seriesData) ? seriesData : seriesData.close;
 	const highPrice = isNumber(seriesData) ? seriesData : seriesData.high;
 	const lowPrice = isNumber(seriesData) ? seriesData : seriesData.low;
-	const sizeMultiplier = isNumber(tpo.size) ? Math.max(tpo.size, 0) : 1;
+	const sizeMultiplier = 1;
 	const shapeSize = calculateShapeHeight(timeScale.barSpacing()) * sizeMultiplier;
 	const halfSize = shapeSize / 2;
-	rendererItem.size = shapeSize;
 
 	switch (tpo.position) {
 		case 'inBar': {
@@ -158,7 +157,6 @@ export class SeriesTPOsPaneView implements IUpdatablePaneView {
 				time: tpo.time,
 				x: 0 as Coordinate,
 				y: 0 as Coordinate,
-				size: 0,
 				internalId: tpo.internalId,
 				externalId: tpo.id,
 				text: undefined,
