@@ -4,7 +4,7 @@ import { BarPrice } from '../model/bar';
 import { Coordinate } from '../model/coordinate';
 import { PriceLineOptions } from '../model/price-line-options';
 import { SeriesMarker } from '../model/series-markers';
-import { SeriesTPO } from '../model/series-tpos';
+import { SeriesTPOProfile } from '../model/series-tpos';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -122,7 +122,7 @@ export interface ISeriesApi<TSeriesType extends SeriesType> {
 	 *
 	 * @param data - array of series TPOs. This array should be sorted by time. Several TPOs with same time are allowed.
 	 */
-	 setTPOs(data: SeriesTPO<Time>[]): void;
+	 setTPOs(data: SeriesTPOProfile<Time>[]): void;
 
 	/**
 	 * Creates a new price line

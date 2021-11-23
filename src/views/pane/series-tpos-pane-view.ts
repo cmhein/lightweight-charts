@@ -7,7 +7,7 @@ import { ChartModel } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
-import { InternalSeriesTPO, SeriesTPO } from '../../model/series-tpos';
+import { InternalSeriesTPOProfile, SeriesTPOProfile } from '../../model/series-tpos';
 import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
 import { IPaneRenderer } from '../../renderers/ipane-renderer';
@@ -35,7 +35,7 @@ interface Offsets {
 // eslint-disable-next-line max-params
 function fillSizeAndY(
 	rendererItem: SeriesTPORendererDataItem,
-	tpo: SeriesTPO<TimePointIndex>,
+	tpo: SeriesTPOProfile<TimePointIndex>,
 	seriesData: BarPrices | BarPrice,
 	offsets: Offsets,
 	textHeight: number,
@@ -153,7 +153,7 @@ export class SeriesTPOsPaneView implements IUpdatablePaneView {
 		const timeScale = this._model.timeScale();
 		const seriesTPOs = this._series.indexedTPOs();
 		if (this._dataInvalidated) {
-			this._data.items = seriesTPOs.map<SeriesTPORendererDataItem>((tpo: InternalSeriesTPO<TimePointIndex>) => ({
+			this._data.items = seriesTPOs.map<SeriesTPORendererDataItem>((tpo: InternalSeriesTPOProfile<TimePointIndex>) => ({
 				time: tpo.time,
 				x: 0 as Coordinate,
 				y: 0 as Coordinate,

@@ -41,7 +41,7 @@ import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { createSeriesPlotList, SeriesPlotList, SeriesPlotRow } from './series-data';
 import { InternalSeriesMarker, SeriesMarker } from './series-markers';
-import { InternalSeriesTPO, SeriesTPO } from './series-tpos';
+import { InternalSeriesTPOProfile, SeriesTPOProfile } from './series-tpos';
 import {
 	AreaStyleOptions,
 	BaselineStyleOptions,
@@ -115,8 +115,8 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private _markers: SeriesMarker<TimePoint>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
 	private _markersPaneView!: SeriesMarkersPaneView;
-	private _TPOs: SeriesTPO<TimePoint>[] = [];
-	private _indexedTPOs: InternalSeriesTPO<TimePointIndex>[] = [];
+	private _TPOs: SeriesTPOProfile<TimePoint>[] = [];
+	private _indexedTPOs: InternalSeriesTPOProfile<TimePointIndex>[] = [];
 	private _TPOsPaneView!: SeriesTPOsPaneView;
 	private _animationTimeoutId: TimerId | null = null;
 
@@ -284,8 +284,8 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this.model().lightUpdate();
 	}
 
-	public setTPOs(data: SeriesTPO<TimePoint>[]): void {
-		this._TPOs = data.map<SeriesTPO<TimePoint>>((item: SeriesTPO<TimePoint>) => ({ ...item }));
+	public setTPOs(data: SeriesTPOProfile<TimePoint>[]): void {
+		this._TPOs = data.map<SeriesTPOProfile<TimePoint>>((item: SeriesTPOProfile<TimePoint>) => ({ ...item }));
 		this._recalculateTPOs();
 		const sourcePane = this.model().paneForSource(this);
 		this._TPOsPaneView.update('data');
@@ -299,7 +299,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		return this._indexedMarkers;
 	}
 
-	public indexedTPOs(): InternalSeriesTPO<TimePointIndex>[] {
+	public indexedTPOs(): InternalSeriesTPOProfile<TimePointIndex>[] {
 		return this._indexedTPOs;
 	}
 
@@ -622,7 +622,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 		const firstDataIndex = ensureNotNull(this._data.firstIndex());
 
-		this._indexedTPOs = this._TPOs.map<InternalSeriesTPO<TimePointIndex>>((tpo: SeriesTPO<TimePoint>, index: number) => {
+		this._indexedTPOs = this._TPOs.map<InternalSeriesTPOProfile<TimePointIndex>>((tpo: SeriesTPOProfile<TimePoint>, index: number) => {
 			// the first find index on the time scale (across all series)
 			const timePointIndex = ensureNotNull(timeScale.timeToIndex(tpo.time, true));
 
@@ -632,6 +632,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			return {
 				time: seriesDataIndex,
 				position: tpo.position,
+				periods: tpo.periods,
 				id: tpo.id,
 				internalId: index,
 				text: tpo.text

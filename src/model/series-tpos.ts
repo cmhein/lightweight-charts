@@ -4,11 +4,21 @@
 export type SeriesTPOPosition = 'aboveBar' | 'belowBar' | 'inBar';
 
 /**
- * Represents a series TPO.
+ * Represents a series TPO profile period.
  */
-export interface SeriesTPO<TimeType> {
+export interface SeriesTPOProfilePeriod {
 	/**
-	 * The time of the TPO.
+	 * Price values of TPOs in the period.
+	 */
+	prices: Number[];
+}
+
+/**
+ * Represents a series TPO profile.
+ */
+export interface SeriesTPOProfile<TimeType> {
+	/**
+	 * The time of the TPO profile.
 	 */
 	time: TimeType;
 	/**
@@ -16,15 +26,19 @@ export interface SeriesTPO<TimeType> {
 	 */
 	position: SeriesTPOPosition;
 	/**
-	 * The ID of the TPO.
+	 * The periods of the TPO profile.
+	 */
+	periods: SeriesTPOProfilePeriod[];
+	/**
+	 * The text of the TPO.
+	 */
+	text: string;
+	/**
+	 * The ID of the TPO profile.
 	 */
 	id?: string;
-	/**
-	 * The optional text of the TPO.
-	 */
-	text?: string;
 }
 
-export interface InternalSeriesTPO<TimeType> extends SeriesTPO<TimeType> {
+export interface InternalSeriesTPOProfile<TimeType> extends SeriesTPOProfile<TimeType> {
 	internalId: number;
 }
