@@ -10,6 +10,7 @@ import { drawText, hitTestText } from './series-tpos-text';
 
 export interface SeriesTPOText {
 	content: string;
+	x: Coordinate;
 	y: Coordinate;
 	width: number;
 	height: number;
@@ -19,7 +20,7 @@ export interface SeriesTPORendererDataItem extends TimedValue {
 	y: Coordinate;
 	internalId: number;
 	externalId?: string;
-	text?: SeriesTPOText;
+	texts: SeriesTPOText[];
 }
 
 export interface SeriesTPORendererData {
@@ -75,24 +76,23 @@ export class SeriesTPOsRenderer extends ScaledRenderer {
 
 		for (let i = this._data.visibleRange.from; i < this._data.visibleRange.to; i++) {
 			const item = this._data.items[i];
-			if (item.text !== undefined) {
-				item.text.width = this._textWidthCache.measureText(ctx, item.text.content);
-				item.text.height = this._fontSize;
-			}
+			item.texts.forEach(text => {
+				text.width = this._textWidthCache.measureText(ctx, text.content);
+				text.height = this._fontSize;
+			});
 			drawItem(item, ctx);
 		}
 	}
 }
 
 function drawItem(item: SeriesTPORendererDataItem, ctx: CanvasRenderingContext2D): void {
-	if (item.text !== undefined) {
-		drawText(ctx, item.text.content, item.x - item.text.width / 2, item.text.y);
-	}
+	item.texts.forEach(text => {
+		drawText(ctx, text.content, text.x - text.width / 2, text.y);
+	});
 }
 
 function hitTestItem(item: SeriesTPORendererDataItem, x: Coordinate, y: Coordinate): boolean {
-	if (item.text !== undefined && hitTestText(item.x, item.text.y, item.text.width, item.text.height, x, y)) {
-		return true;
-	}
-	return false;
+	return item.texts.some(text => {
+		return hitTestText(text.x, text.y, text.width, text.height, x, y);
+	});
 }

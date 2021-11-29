@@ -41,7 +41,7 @@ import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { createSeriesPlotList, SeriesPlotList, SeriesPlotRow } from './series-data';
 import { InternalSeriesMarker, SeriesMarker } from './series-markers';
-import { InternalSeriesTPOProfile, SeriesTPOProfile } from './series-tpos';
+import { InternalSeriesTPOProfile, SeriesTPOProfile, SeriesTPOPeriod, SeriesTPO } from './series-tpos';
 import {
 	AreaStyleOptions,
 	BaselineStyleOptions,
@@ -99,6 +99,31 @@ export interface SeriesUpdateInfo {
 export type SeriesOptionsInternal<T extends SeriesType = SeriesType> = SeriesOptionsMap[T];
 export type SeriesPartialOptionsInternal<T extends SeriesType = SeriesType> = SeriesPartialOptionsMap[T];
 
+class UpperAlpha {
+	private _charCode: number = 0;
+
+	public constructor() {
+		this.reset();
+	}
+
+	public reset(): string {
+		this._charCode = 65; // "A"
+		return this.get();
+	}
+
+	public get(): string {
+		return String.fromCharCode(this._charCode);
+	}
+
+	public next(): string {
+		++this._charCode;
+		if (this._charCode > 90) { // "Z"
+			return this.reset();
+		}
+		return this.get();
+	}
+}
+
 export class Series<T extends SeriesType = SeriesType> extends PriceDataSource implements IDestroyable {
 	private readonly _seriesType: T;
 	private _data: SeriesPlotList<T> = createSeriesPlotList();
@@ -115,7 +140,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private _markers: SeriesMarker<TimePoint>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
 	private _markersPaneView!: SeriesMarkersPaneView;
-	private _TPOs: SeriesTPOProfile<TimePoint>[] = [];
+	private _tpos: SeriesTPOProfile<TimePoint>[] = [];
 	private _indexedTPOs: InternalSeriesTPOProfile<TimePointIndex>[] = [];
 	private _TPOsPaneView!: SeriesTPOsPaneView;
 	private _animationTimeoutId: TimerId | null = null;
@@ -285,7 +310,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public setTPOs(data: SeriesTPOProfile<TimePoint>[]): void {
-		this._TPOs = data.map<SeriesTPOProfile<TimePoint>>((item: SeriesTPOProfile<TimePoint>) => ({ ...item }));
+		this._tpos = data.map<SeriesTPOProfile<TimePoint>>((item: SeriesTPOProfile<TimePoint>) => ({ ...item }));
 		this._recalculateTPOs();
 		const sourcePane = this.model().paneForSource(this);
 		this._TPOsPaneView.update('data');
@@ -622,20 +647,38 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 		const firstDataIndex = ensureNotNull(this._data.firstIndex());
 
-		this._indexedTPOs = this._TPOs.map<InternalSeriesTPOProfile<TimePointIndex>>((tpo: SeriesTPOProfile<TimePoint>, index: number) => {
+		this._indexedTPOs = this._tpos.map<InternalSeriesTPOProfile<TimePointIndex>>((profile: SeriesTPOProfile<TimePoint>, index: number) => {
 			// the first find index on the time scale (across all series)
-			const timePointIndex = ensureNotNull(timeScale.timeToIndex(tpo.time, true));
+			const timePointIndex = ensureNotNull(timeScale.timeToIndex(profile.time, true));
 
 			// and then search that index inside the series data
 			const searchMode = timePointIndex < firstDataIndex ? PlotRowSearchMode.NearestRight : PlotRowSearchMode.NearestLeft;
 			const seriesDataIndex = ensureNotNull(this._data.search(timePointIndex, searchMode)).index;
+			const priceCounts = new Map();
+			const letters = new UpperAlpha();
+			let letter = letters.get();
+			profile.periods = profile.periods.map<SeriesTPOPeriod>((period: SeriesTPOPeriod) => {
+				period.letter = letter;
+				period.tpos = period.tpos.map<SeriesTPO>((tpo: SeriesTPO) => {
+					let count = priceCounts.get(tpo.price);
+					if (count === undefined) {
+						count = 1;
+					}
+					else {
+						++count;
+					}
+					priceCounts.set(tpo.price, count);
+					tpo.column = count - 1;
+					return tpo;
+				});
+				letter = letters.next();
+				return period;
+			});
 			return {
 				time: seriesDataIndex,
-				position: tpo.position,
-				periods: tpo.periods,
-				id: tpo.id,
-				internalId: index,
-				text: tpo.text
+				periods: profile.periods,
+				id: profile.id,
+				internalId: index
 			};
 		});
 	}

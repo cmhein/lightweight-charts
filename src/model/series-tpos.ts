@@ -1,44 +1,45 @@
-/**
- * Represents the position of a series TPO relative to a bar.
- */
-export type SeriesTPOPosition = 'aboveBar' | 'belowBar' | 'inBar';
+import { BarPrice } from './bar';
 
-/**
- * Represents a series TPO profile period.
- */
-export interface SeriesTPOProfilePeriod {
+export interface SeriesTPO {
 	/**
-	 * Price values of TPOs in the period.
+	 * Price.
 	 */
-	prices: Number[];
+	price: BarPrice;
+	/**
+	 * Profile column index (zero-based).
+	 */
+	column?: number;
 }
 
-/**
- * Represents a series TPO profile.
- */
-export interface SeriesTPOProfile<TimeType> {
+export interface SeriesTPOPeriod {
 	/**
-	 * The time of the TPO profile.
+	 * TPOs in this period.
+	 */
+	tpos: SeriesTPO[];
+	/**
+	 * Letter to display.
+	 */
+	letter?: string;
+}
+
+ export interface SeriesTPOProfile<TimeType> {
+	/**
+	 * Time of the TPO profile.
 	 */
 	time: TimeType;
 	/**
-	 * The position of the TPO.
+	 * Periods in the TPO profile.
 	 */
-	position: SeriesTPOPosition;
+	periods: SeriesTPOPeriod[];
 	/**
-	 * The periods of the TPO profile.
-	 */
-	periods: SeriesTPOProfilePeriod[];
-	/**
-	 * The text of the TPO.
-	 */
-	text: string;
-	/**
-	 * The ID of the TPO profile.
+	 * ID of the TPO profile.
 	 */
 	id?: string;
 }
 
 export interface InternalSeriesTPOProfile<TimeType> extends SeriesTPOProfile<TimeType> {
+	/**
+	 * Internal id.
+	 */
 	internalId: number;
 }
